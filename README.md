@@ -6,7 +6,16 @@ Given time series data on a measure-preserving chaotic system, this framework ge
 
 <img src="https://github.com/arbabiha/StochasticModelingwData/blob/master/thehood/FrameworkSketch.png" width="700">
 
-### files in the root folder:
+#### files in the root folder:
 
 #### Lorenz 96: 
-Runs the Lorenz example in the paper and generates the figures in the paper
+Finds a 1D SDE and a 1D nonlinear observation map that reproduces the statistics of a chaotic Lorenz 96 state variable
+
+#### Cavity: 
+Finds a 10D SDE and 10D nonlinear map that give the same stat as SPOD modal coordinates. Before running this download the cavity time series data from ... and put in "thehood" folder.
+
+#### Climate: 
+Given chaotic climate time series, it uses the transport to extrapolate the tails of the distribution.
+
+
+## Dependencies:
