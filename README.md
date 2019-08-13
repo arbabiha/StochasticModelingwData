@@ -6,7 +6,7 @@ Given time series data on a measure-preserving chaotic system, this framework ge
 
 <img src="https://github.com/arbabiha/StochasticModelingwData/blob/master/thehood/FrameworkSketch.png" width="700">
 
-#### files in the root folder:
+## files in the root folder:
 
 #### Lorenz 96: 
 Finds a 1D SDE and a 1D nonlinear observation map that reproduces the statistics of a chaotic Lorenz 96 state variable
@@ -22,7 +22,7 @@ Given chaotic climate time series, it uses the transport to extrapolate the tail
 
 [Transportmaps by UQgroup @MIT](https://transportmaps.mit.edu/docs/): This package is used to compute the mapping between data distribution and the invariant measure of SDE system --- here Standard Normal Distribution
 
-[Numba](https://numba.pydata.org/):Used for fast integration of SDEs.
+[Numba](https://numba.pydata.org/): Used for fast integration of SDEs.
 
 [joblib](https://joblib.readthedocs.io/en/latest/): Used for parallel computation of inverse function in transportmaps
 
