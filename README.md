@@ -6,3 +6,7 @@ Given time series data on a measure-preserving chaotic system, this framework ge
 
 <img src="https://github.com/arbabiha/StochasticModelingwData/blob/master/thehood/FrameworkSketch.png" width="700">
 
+### files in the root folder:
+
+#### Lorenz 96: 
+Runs the Lorenz example in the paper and generates the figures in the paper
