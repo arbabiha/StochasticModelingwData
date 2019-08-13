@@ -29,4 +29,4 @@ Given chaotic climate time series, it uses the transport to extrapolate the tail
 [pyswarm](https://pythonhosted.org/pyswarm/): Used for optimization of SDE parameters to match the spectrum of transported data.
 
 Send comments and questions to arbabiha@gmail.com
-H. Arbabi
+
