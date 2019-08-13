@@ -2,7 +2,7 @@
 A Python implementation of the framework proposed in  *"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics"*
  by H. Arbabi and T. Sapsis.
  
-Given time series data on a measure-preserving chaotic system, this framework generates a system of SDEs with nonlinear observation maps which produce statsitics and spectra similar to the time series. Here is the schematic representation:
+Given time series data on a measure-preserving chaotic system, this framework generates a system of SDEs with nonlinear observation maps which produce statsitics and spectra similar to the time series. Here is a schematic representation:
 
 <img src="https://github.com/arbabiha/StochasticModelingwData/blob/master/thehood/FrameworkSketch.png" width="700">
 
