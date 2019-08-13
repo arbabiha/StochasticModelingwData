@@ -20,13 +20,13 @@ Given chaotic climate time series, it uses the transport to extrapolate the tail
 
 ## Dependencies:
 
-[Transportmaps by UQgroup @MIT](https://transportmaps.mit.edu/docs/): This package is used to compute the mapping between data distribution and the invariant measure of SDE system --- here Standard Normal Distribution
+[Transportmaps by UQgroup @MIT](https://transportmaps.mit.edu/docs/): This package is used to compute the mapping between data distribution and the invariant measure of SDE system --- here Standard Normal Distribution.
 
 [Numba](https://numba.pydata.org/): Used for fast integration of SDEs.
 
-[joblib](https://joblib.readthedocs.io/en/latest/): Used for parallel computation of inverse function in transportmaps
+[joblib](https://joblib.readthedocs.io/en/latest/): Used for parallel computation of inverse function in transportmaps.
 
 [pyswarm](https://pythonhosted.org/pyswarm/): Used for optimization of SDE parameters to match the spectrum of transported data.
 
-Send comments and questions to arbabiha@gmail.com
+Send comments and questions to arbabiha@gmail.com.
 
