@@ -6,5 +6,5 @@ following the paper
  
  The Koopman-MPC framework is summarized in the below figure:
 
-<img src="https://github.com/arbabiha/KoopmanMPC_for_flowcontrol/blob/master/thehood/BigPic.png" width="700">
+<img src="https://github.com/arbabiha/StochasticModelingwData/blob/master/thehood/FrameworkSketch.png" width="700">
 
