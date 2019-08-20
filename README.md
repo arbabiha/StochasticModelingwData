@@ -9,14 +9,15 @@ Given time series data on a measure-preserving chaotic system, this framework ge
 ## files in the root folder:
 
 #### Lorenz 96: 
-Finds a 1D SDE and a 1D nonlinear observation map that reproduces the statistics of a chaotic Lorenz 96 state variable
+Finds a 1D SDE and a 1D nonlinear observation map that reproduces the statistics of a chaotic Lorenz 96 state variable. Runtime ~ 5 min.
 
 #### Cavity: 
-Finds a 10D SDE and 10D nonlinear map that give the same stat as SPOD modal coordinates. Before running this download the cavity time series data from ... and put in "thehood" folder.
+Finds a 10D SDE and 10D nonlinear map that give the same stat as SPOD modal coordinates. Runtime ~1hr.
 
 #### Climate: 
-Given chaotic climate time series, it uses the transport to extrapolate the tails of the distribution.
+Given chaotic climate time series, it uses the transport to extrapolate the tails of the distribution. Runtime ~ 0.5 hr.
 
+The bottleneck of above codes is computing the inverse of transport maps for SDE models. The reported simulation times are based on using 20 parallel threads.
 
 ## Dependencies:
 
