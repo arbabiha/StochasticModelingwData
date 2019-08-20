@@ -8,6 +8,8 @@ Given time series data on a measure-preserving chaotic system, this framework ge
 
 ## files in the root folder:
 
+#### Data: Before running the code got to https://www.dropbox.com/sh/yri4i4r90glh8q2/AADbfXQ0FFGstQbXAM1sdvw6a?dl=0 download the .mat files and place them in thehood folder.
+
 #### Lorenz 96: 
 Finds a 1D SDE and a 1D nonlinear observation map that reproduces the statistics of a chaotic Lorenz 96 state variable. Runtime ~ 5 min.
 
