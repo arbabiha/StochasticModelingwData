@@ -20,7 +20,7 @@ Finds a 10D SDE and 10D nonlinear map that give the same statistics and PSD as S
 #### Climate: 
 It uses the optimal transport model to extrapolate the tails of the distribution (i.e. characterizes the probabilities of extreme events). Runtime is about ~30min.
 
-These codes just represent the use of modules in './thehood/' and generate the plots in the paper. The computational bottleneck in all three is computing the inverse of transport maps for SDE models. The reported simulation times are based on using 20 parallel threads.
+These codes represent the use of modules in './thehood/' and reproduce the plots in the paper. The computational bottleneck in all three is computing the inverse of transport maps for samples generated from SDE models. The reported simulation times are based on using 20 parallel threads.
 
 ## Dependencies:
 
