@@ -1,11 +1,11 @@
 """
-Example of cavity flow from
-"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
+Stochastic modeling of SPOD coordiantes for lid-driven cavity flow.
+
+An example from "Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
 by H. Arbabi and T. Sapsis
-April 2019, arbabi@mit.edu
+April 2019, arbabiha@gmail.com
 """
 
-# small_data limit of our framework
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
@@ -30,6 +30,16 @@ import SDE_systems as sm
 
 
 def Cavity_SDEmodeling():
+    """Models a state variable of Lorenz using optimal transport.
+    
+    The code
+    1- loads the SPOD mode and coordiante data,
+    2- computes the transport map to standard normal distiburion,
+    3- identifies linear stochastic oscillators with same spectra
+    4- computes a trajectory from oscillators and pull them back under the transport map.
+    5- computes pointwise stats for cavity
+    """
+
     Dim = 10
     n_samp,t_max=10,2500
     poly_order=2
@@ -44,8 +54,10 @@ def Cavity_SDEmodeling():
     if not os.path.exists(SavePath):
         os.makedirs(SavePath)
 
-    # loading the data
-    CavityData=sio.loadmat('./thehood/Cavity_SPOD_small.mat')
+    # We have already computed the SPOD of cavity
+    # here we only load and subsample the data
+
+    CavityData=sio.loadmat('./thehood/Cavity_SPOD_small.mat') 
     SPOD_coords,t_coords = CavityData['y'],CavityData['t']
     SPOD_coords = np.real(SPOD_coords[0:Dim,:])
     SPOD_coords = np.swapaxes(SPOD_coords,0,1)
@@ -68,8 +80,8 @@ def Cavity_SDEmodeling():
     # dill.dump(T,file_h)
     # file_h.close()
 
-    # model the q dynamics
-    Oscillator_Params=sm.SystemID_spec_match(q_train,dt=dt)
+    
+    Oscillator_Params=sm.SystemID_spec_match(q_train,dt=dt) # model the q dynamics
 
 
     # generate trajectory of those SDEs
@@ -89,12 +101,27 @@ def Cavity_SDEmodeling():
 
 
     # compute the poitwsie stat in truth and model
-    PointwiseStats4cavity(y_train,y_model,SPOD_coords,Tag)
+    PointwiseStats4cavity(y_train,y_model,SPOD_coords,Tag) 
 
     return Tag[:-1]
 
 
 def PointwiseStats4cavity(x_train,x_model,x_truth,Tag):
+    """Computes the pointwise time-series at several points in cavity.
+
+    This code constructs the SPOD model -- using SDE model and truth --
+    and computes time-series of pointwise velocity at a few points.
+    Loads the sensor location information.
+
+    Args:
+        x_train (np.ndarray): the training SPOD coordiante time series
+        x_model (np.ndarray): the SPOD coordiante time series from the stochastic model
+        x_truth (np.ndarray): the truth SPOD coordiante time series
+
+    Returns:
+        saves the ponitwise time series.
+    """
+
     # load spatial modes 
     Dim = x_model.shape[1]
     ModeData=sio.loadmat('./thehood/Cavity_SPOD_small.mat')
@@ -158,6 +185,8 @@ def PointwiseStats4cavity(x_train,x_model,x_truth,Tag):
 
 
 def Plot_SPOD_marginal(savepath,tag='',picformat='png'):
+    """Plots the PDF marginals of SPOD coordiantes."""
+
     plt.rc('font', family='serif',size=9)
     tfs = 10
 
@@ -191,6 +220,8 @@ def Plot_SPOD_marginal(savepath,tag='',picformat='png'):
 
 
 def Plot_signals_and_spectra(savepath,tag='',picformat='png'):
+    """Plots the pointwise SPOD signals and spectra."""
+
     plt.rc('font', family='serif',size=9)
     tfs = 10
     MyColors=['#377eb8','#d95f02']
@@ -307,6 +338,8 @@ def Plot_signals_and_spectra(savepath,tag='',picformat='png'):
     plt.savefig(savepath+'cavity_spectra_10d.'+picformat,dpi=400)
 
 def Plot_pointwise_stat(savepath,tag='',picformat='png'):
+    """Plots the pointwise SPOD signals and spectra."""
+
     plt.rc('font', family='serif',size=9)
     tfs = 10
 
@@ -421,6 +454,7 @@ def Plot_pointwise_stat(savepath,tag='',picformat='png'):
 
 
 if __name__ == '__main__':
+    """Runs the cavity modeling and generates the plots in the paper."""
     print('modeling cavity flow  ...')
     tt = timeit.default_timer()
     tag=Cavity_SDEmodeling()

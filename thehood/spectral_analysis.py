@@ -1,9 +1,9 @@
 """
-some tools for approximation of Koopman continuous spectrum 
-(i.e. power spectral density) in
-"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
+Tools for approximation of Koopman continuous spectrum (aka PSD).
+
+Used in "Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
 by H. Arbabi and T. Sapsis
-April 2019, arbabi@mit.edu
+April 2019, arbabiha@gmail.com
 """
 
 import numpy as np
@@ -18,20 +18,24 @@ from numba import jit
 
 import SDE_systems as sm
 
-def Welch_estimator(x,M=100,L=200,fs=1):
-    # computes the power spectral density via Welch method based on
-    #  P. Welch, The use of fast Fourier transform for the estimation of power spectra: A method based on time
-    #  averaging over short, modified periodograms, IEEE Trans. Audio Electroacoust. 15, 70 (1967).
-    #  Inputs:
-    #  x: the signal vector (nx1) 
-    #  M: length of each block    
-    #  K: overlap length      
-    #  L: size of the padded FFT grid
-    #  fs: sampling frequency (in Hz)
+def Welch_estimator(x, M=100, L=200, fs=1):
+    """Computes the power spectral density via Welch method.
 
-    # Outputs:
-    #  omega: frequency grid (in rad/sec)
-    #   phi: power spectral density
+    Based on the paper by P. Welch
+    'The use of fast Fourier transform for the estimation of 
+    power spectra: A method based on time averaging over short, 
+    modified periodograms', IEEE Trans. Audio Electroacoust. 15, 70 (1967).
+
+    Args:
+     x: 1d arrayt of signal 
+     M: length of each block used     
+     L: size of the padded FFT grid
+     fs: sampling frequency (in Hz)
+
+    Returns:
+        omega: array of frequency grid (in rad/sec)
+        phi: the power spectral density over omega
+    """
 
     K = int(M/2)    # overlap length
     N = x.shape[0]
@@ -55,19 +59,25 @@ def Welch_estimator(x,M=100,L=200,fs=1):
     # the freqency grid
     omega = 2*np.pi*fs*np.linspace(0,1,L)
 
-
-
     return omega,phi
 
 
 
 
 def approx_PSD_w_delta(wg,p,nw=100,fs=1):
-    # given spectral density p on the grid w 
-    # this function approximates that density 
-    # with nw delta functions (i.e. discrete frequencies)
-    # and returns the location of those frequencies (w) and their amplitude (a)
+    """Approximates the PSD with delta functions.
+    
+    This is equivalent to approximating a chaotic signal
+    with quasi-periodic signa.
 
+    Args:
+        wg (np.ndarray): array of frequency grid
+        p (np.ndarray): PSD values corresponding to wg
+    
+    Returns:
+        w: array of discrete frequncy values
+        a: array of amplitudes (sqrt of power) for discrete frequencies
+    """
 
     # generate a random set of intervals on [0,pi]
     e =np.append(np.random.rand(nw-1)*np.pi*fs,[0,np.pi*fs])
@@ -89,10 +99,22 @@ def approx_PSD_w_delta(wg,p,nw=100,fs=1):
     return w,a,dw,rho
 
 
-
-
-
 def Oscillator_Spectrum(k,b,D,w):
+    """Computes the response PSD of a linear stochastic oscillator.
+    
+    The oscillator given by
+    kx + b xdot + xddot = sqrt{2D}Wdot
+    Its PSD is computed using Wiener-Khinchin relation.
+
+    Args:
+        k (float): stiffness
+        b (float): damping coeff
+        D (float): intensity of white noise forcing
+        w (np.ndarray): 1d array of frequencies on which the PSD of x is evaluated
+
+    Returns:
+        array of PSD values on w
+    """
     # returns the response PSD of a stochastic oscillator
     # with stiffness k, damping coeff b, and wgn forcing amplitude sqrt{2D}
     # at grid values of frequency w (rad/sec)
@@ -107,8 +129,8 @@ def Oscillator_Spectrum(k,b,D,w):
 
 
 def test_Welch_vs_WKrelation():
-    # verifying that PSD computed by Welch matches
-    # the analytical formula of Wiener Khinchin relationship
+    """Verifies that PSD computed by Welch matches the analytical formula."""
+
 
     # form a linear system (damper and spring)
     k,b,D = 2.91,1.58,4.60
@@ -142,8 +164,6 @@ def test_Welch_vs_WKrelation():
 def next_power_of_2(x):
     s=int(2**(x.bit_length()))
     return s
-
-
 
 
 if __name__ == '__main__':

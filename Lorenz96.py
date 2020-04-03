@@ -1,8 +1,9 @@
 """
-Example of Lorenz 96 model from
-"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
-by H. Arbabi and T. Sapsis
-April 2019, arbabi@mit.edu
+Stochastic modeling of Lorenz 96 model.
+
+An example from "Data-driven modeling of strongly nonlinear chaotic systems 
+with non-Gaussian statistics" by H. Arbabi and T. Sapsis
+April 2019, arbabiha@gmail.com
 """
 
 import numpy as np
@@ -21,24 +22,31 @@ from numpy.polynomial.polynomial import Polynomial
 # custom tools
 from sys import path
 path.append('./thehood/')
-import plotting_tools as pt
-import spectral_analysis as sa
-import transport_maps as tm
-import SDE_systems as sm
+import plotting_tools as pt   # pylint: disable=import-error
+import spectral_analysis as sa  # pylint: disable=import-error
+import SDE_systems as sm  # pylint: disable=import-error
+import transport_maps as tm  # pylint: disable=import-error
 
 
 
 
 
 def Lorenz96_SDEmodel():
-    # modeling Lorenz 96 model as a SDE
+    """Models a state variable of Lorenz using optimal transport.
+    
+    The code
+    1- loads the data,
+    2- computes the transport map to standard normal distiburion,
+    3- identifies linear stochastic oscillators with same spectra
+    4- computes some data from oscillators and pull them back under the transport map.
+    """
 
-    Dim=1   # how many state variables we use as output
+    Dim=1  
     n_samp=1    # sampling interval (dt=0.1)
-    t_max=1000   # length of data
+    t_max=1000   
     poly_order=3    # degree of polynomial used for transport map
     
-    # create path for figures
+    
     Tag='r'+str(poly_order)+'_t'+str(t_max)+'_ns'+str(n_samp)
     SavePath='./results/'
     if not os.path.exists(SavePath):
@@ -46,7 +54,9 @@ def Lorenz96_SDEmodel():
         os.makedirs(SavePath)
 
 
-    # load and subsample the data
+    # We have already computed the time-series
+    # here we only load and subsample the data
+
     LorenzData=sio.loadmat('./thehood/Lorenz96Data.mat')
     x0,t0 = LorenzData['y'],LorenzData['t']
     dt = t0[1]-t0[0]
@@ -54,29 +64,33 @@ def Lorenz96_SDEmodel():
     x0 = x0[:n_max:n_samp,0:Dim]
     t0 = t0[:n_max:n_samp]
 
-    # compute the transport map
+    
     T=tm.compute_transport_map(x0,polynomial_order=poly_order)
 
-    # extract the coefficients (just for display)
-    TMCoeffs(T,polynomial_order=poly_order)
+    
+    TMCoeffs(T,polynomial_order=poly_order) # extract and plot the coefficients (just for display)
 
-    # transform the data and find the SDEs
+    
     q0 = T(x0)
     Oscillator_Params=sm.SystemID_spec_match(q0,dt=dt)
 
-    # generate trajectory of those SDEs
     t_model,q_model=sm.draw_trajectory_SDEsys(Oscillator_Params,T=10000,dt=0.1)
+    x_model=tm.TMinverse(q_model,T)  # trnasform back to the y-space
 
-    # trnasform back to the y-space
-    x_model=tm.TMinverse(q_model,T)
-
-
-    # save data
     sio.savemat(SavePath+'LorenzModel_'+Tag[:],{'x_model':x_model,'x_train':x0,'t_model':t_model,'q':q0,'q_model':q_model,'t_train':t0})
 
 
 def Lorenz96_RandomPhaseModel():
-    print('constructing random phase model for a state of Lorenz 96 model')
+    """Constructing a random phase model for a Lorenz 96 state.
+    
+    The code
+    1- loads the data,
+    2- estimates the PSD of time series ,
+    3- approximates the PSD with discrete spectrum,
+    4- generates a quasi-periodic system with that discrete spectrum 
+    5- generates some data from it.
+    """
+
     LorenzData=sio.loadmat('./thehood/Lorenz96Data.mat')
     x,t = LorenzData['y'],LorenzData['t']
     x_mean = np.mean(x[:,0])
@@ -111,8 +125,9 @@ def Lorenz96_RandomPhaseModel():
 
 
 def TMCoeffs(T,polynomial_order=3):
-    # extracting the polynomial coefficients
-    # for a 1D map
+    """Extracts and prints the (approximate) coefficients of transport map polynomial."""
+
+
     if T.dim==1:
         r=polynomial_order
         x = (np.arange(0,r+1)-2)*.1
@@ -131,6 +146,8 @@ def TMCoeffs(T,polynomial_order=3):
 
 
 def Plot_Lorenz96(savepath,tag='',picformat='png'):
+    """Generates and saves the result figure for Lorenz in the paper."""
+
     # first the random phase model
     plt.rc('font', family='serif',size=9)
     tfs = 10
@@ -162,9 +179,6 @@ def Plot_Lorenz96(savepath,tag='',picformat='png'):
     # we use the training data as truth
     x=x_train[:,0]
     x_mean = np.mean(x)
-
-
-
 
     nt = 201
     t = np.arange(0,nt)*dt
@@ -260,6 +274,7 @@ def Plot_Lorenz96(savepath,tag='',picformat='png'):
 
 
 if __name__ == '__main__':
+    """Runs the Lorenz 96 modeling and generates the plots in the paper."""
     print('modeling Lorenz 96 ...')
     tt = timeit.default_timer()
     Lorenz96_SDEmodel()

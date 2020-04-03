@@ -1,6 +1,8 @@
 """
-a wrapper for computing the transport maps in
-"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
+A wrapper for computing the transport maps.
+
+
+Used in "Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
 by H. Arbabi and T. Sapsis
 April 2019, arbabi@mit.edu
 
@@ -25,17 +27,21 @@ TM.setLogLevel(logging.INFO)
 
 
 
-def compute_transport_map(x0,polynomial_order=2,MPIsetup=None):
-    # x0:               the data matrix (each column represents a random variable)
-    # polynomial_order: order of polynomial used
-    # MPIsetup:         a list that describes how many cores hould be used
-    # for computation of dimensions starting from the last 
-    # for example MPIsetup =[2,3,4]
-    # uses 4 cores for the n-th dimension, 3 for n-1-th and 2 for n-2th
+def compute_transport_map(x0, polynomial_order=2, MPIsetup=None):
+    """Computes the polynomial transport map from x0 to standard normal distribution.
 
-    # returns the transport map SL 
+    Args:
+        x0 (np.ndarray): the data matrix (each column represents a random variable)
+        polynomial_order: order of polynomial used
+        MPIsetup: a list that describes how many cores should be used
+            for computation of dimensions starting from the last 
+            for example MPIsetup =[2,3,4]
+            uses 4 cores for the n-th dimension, 3 for n-1-th and 2 for n-2th
 
+    Returns:
+        SL: the transport map object which also works as a function i.e. y=SL(x) 
 
+    """
 
     Dim = x0.shape[1]
 
@@ -47,15 +53,14 @@ def compute_transport_map(x0,polynomial_order=2,MPIsetup=None):
 
 
     # first we pack the distribution into neighborhood of origin 
-    # linear adjustment
+    # via a linear adjustment
     beta = 1.0   
     b= beta/np.std(x0,0)
     a= - b * np.mean(x0,0)  # centering
     L = MAPS.FrozenLinearDiagonalTransportMap(a,b)
 
 
-
-    # Square Integral formulation of transport maps (robust and fast)
+    # we use Square Integral formulation of transport maps (robust and fast)
     S = TM.Default_IsotropicIntegratedSquaredTriangularTransportMap(Dim, polynomial_order, 'total')
     print(30*"-")
     print("Computing transport maps with polynomial order: %d" % polynomial_order)
@@ -94,9 +99,9 @@ def compute_transport_map(x0,polynomial_order=2,MPIsetup=None):
     return SL
 
 
-
-# a modification of distirbution object from TM 
 class DistributionFromSamples(DIST.Distribution):
+    """A modification of distirbution object from transportmap package."""
+
     def __init__(self, x):
         super(DistributionFromSamples,self).__init__(np.size(x,1))
         self.x = x
@@ -112,12 +117,18 @@ class DistributionFromSamples(DIST.Distribution):
 
 
 # computing the inverse of transport maps
-def TMinverse(q_samp,T,num_core = 20):
-    # q_samp: the data matrix for the variables with the reference measure (each column is a random variable)
-    # T: the forward transport map, i.e. q=T(x)
-    # num_core: number of cores used in parallel computation of x
+def TMinverse(q_samp, T, num_core=20):
+    """Evaluates the inverse of the transport map.
 
-    # returns x_back= T^{-1}(q_samp)   
+    Args:
+        q_samp (np.ndarray): the data matrix for the variables with the 
+            reference measure (each column is a random variable)
+        T: the transport map object, i.e. q=T(x)
+        num_core: number of cores used in parallel computation of x
+
+    Returns:
+        x_back= T^{-1}(q_samp) 
+    """
 
     print('parallel computing the inverse map ...')
     print('data shape='+str(q_samp.shape))
@@ -151,6 +162,8 @@ def TMinverse(q_samp,T,num_core = 20):
     return x_back
 
 def Generate_SND_sample(Dim,n=1000000):
+    """Generates a smaple from standard normal distribution."""
+    
     rho = DIST.StandardNormalDistribution(Dim)
     x, w = rho.quadrature(0, n)
     return x

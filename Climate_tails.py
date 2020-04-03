@@ -1,8 +1,9 @@
 """
-Example of climate data and tail extrapolation
-"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
+Stochastic modeling of climate data and tail extrapolation.
+
+An example from "Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
 by H. Arbabi and T. Sapsis
-April 2019, arbabi@mit.edu
+April 2019, arbabiha@gmail.com
 """
 
 import matplotlib
@@ -29,17 +30,28 @@ import SDE_systems as sm
 
 
 def ExtrapolateTails(idx_target=0):
-    """
-    inputs:     idx_target --->  0:U-velocity, 1:V-velocity and 2:Temperature
+    """Extrapolating the tails of climate tim-series.
 
-    the data structure for NorthPole_data.mat:
-    y(:,1:3) the time series of respectively U, V and T wavelet coefficients on top of NorthPole (target variables)
+
+    We load the time series data from NorthPole_data.mat. Here is its structure:
+    y(:,1:3) the time series of respectively U, V and T wavelet 
+       coefficients on top of NorthPole (target variables)
     y(:,4:30) the time series of covariates most correlated with U at North Pole
     y(:,58:84) the time series of covariates most correlated with T at North Pole
     npc=27 is the number of covariates for each target variable
-    yp is the periodic part of y
-    yc is the chaotic part of y
-    y=yp+yc
+    yp is the periodic part of y & yc is the chaotic part of y
+    such that y=yp+yc
+    
+    The code finds the mapping from data (various choice of variables)
+    to Standard Normal Distribution (SND), then generates a big sample from SND
+    and pulls it back under the mapping. 
+
+    Args:
+        idx_target: 0:U-velocity, 1:V-velocity and 2:Temperature
+
+    
+    Returns:
+        saves the pulled back data
     
     """
     years_train = 2 # how many years of training data
@@ -97,12 +109,13 @@ def ExtrapolateTails(idx_target=0):
         # save ymodel to a larger data-set
         yns_model[:,dim]=yn_model
 
-
-        # we do the saving in each loop bc TM sometimes diverges
+        # we do the saving in each loop
         sio.savemat('./results/'+Tag,{'y_truth':yn_truth,'y_train':yn_train,'ys_model':yns_model,'n_completed':dim})
     
     
 def Plot_NorthPole_signals(savepath,tag='',picformat='png'):
+    """Plots the time series of U-velocity and temperature wavelet coeffs on Northpole."""
+
     plt.rc('font', family='serif',size=9)
     tfs = 10
 
@@ -198,6 +211,8 @@ def Plot_NorthPole_signals(savepath,tag='',picformat='png'):
 
 
 def Plot_tails_wCI(savepath,tag='',picformat='png'):
+    """Plots the extrapolated tails U & T wavelet coeffs on Northpole."""
+
     plt.rc('font', family='serif',size=9)
     tfs = 10
 
@@ -301,6 +316,7 @@ def Plot_tails_wCI(savepath,tag='',picformat='png'):
 
 
 if __name__=='__main__':
+    """Runs the climate tail extrapolation and generates the plots in the paper."""
     print('extrapolating tails ...')
     tt = timeit.default_timer()
     ExtrapolateTails(idx_target=0)

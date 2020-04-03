@@ -1,5 +1,10 @@
-# some tools to compute and visulaize marginal pdfs in 1d and 2d
-# H. Arbabi arbabi@mit.edu
+"""
+Tools for computing and plotting PDFs from sample data.
+
+Used in "Data-driven modeling of strongly nonlinear chaotic systems 
+with non-Gaussian statistics" by H. Arbabi and T. Sapsis
+April 2019, arbabiha@gmail.com
+"""
 
 
 import numpy as np
@@ -13,20 +18,28 @@ from scipy.stats import norm
 
 NiceBlue=cm.Blues(240)
 
-def pdf_1d(f,nx=100, smoothing_sigma=None,MyRange=None):
+def pdf_1d(f, nx = 100, smoothing_sigma = None, MyRange = None):
+    """Computes (a smoothed) PDF of 1D data.
+    
+    Args:
+        f: 1d array of sample data.
+        nx: number of bins.
+        smoothing_sigma: the STD of a Gaussian kernel convolved with the pdf. 
+            If None, no smoothing is done.
+        MyRange: the range of the pdf domain. Used when there are outliers
+            that mess up the histogram bining.
+    
+    Returns:
+        xx_: the domain of PDF
+        rho_: the PDF values on xx_ 
+        """
 
-    # if MyRange is not None:
-    #     # n0 = f.shape[0]
-    #     f= f[f>MyRange[0]]
-    #     f= f[f<MyRange[1]]
-    #     # print(str((n0-f.shape[0])/n0)+' of data is cut')
 
     count, bins  = np.histogram(f, bins=nx, density=True,range=MyRange)
     xx_=0.5*(bins[0:-1]+bins[1:])
     rho_=count
 
     if smoothing_sigma is not None:
-        # smooth the pdf by convolving with a Gaussian kernel
         rho_=np.concatenate((rho_[0]*np.ones((1)),rho_,rho_[-1]*np.ones((1))))
         rho_smoothed = gaussian_filter(rho_,sigma=smoothing_sigma)
         rho_ = rho_smoothed[1:-1]
@@ -34,19 +47,35 @@ def pdf_1d(f,nx=100, smoothing_sigma=None,MyRange=None):
 
 
 
-def pdf_1d_wCI(f,nx=100, smoothing_sigma=None,MyRange=None):
-    # computing the pdf and its oncfidence interval using 
-    # binomial parameter fit
-    # using "adjusted Wald" in Agresti & Coull 1998
-    # or what for tails?
+def pdf_1d_wCI(f, nx=100, smoothing_sigma=None, MyRange=None):
+    """Computes PDF of 1D data and its confidence interval.
     
-    count, bins  = np.histogram(f, bins=nx, density=False,range=MyRange)
+    To compute the confidence interval, we use "adjusted Wald" 
+    in Agresti & Coull 1998.
+    
+    Args:
+        f: 1d array of sample data.
+        nx: number of bins.
+        smoothing_sigma:the STD of a Gaussian kernel convolved with the pdf.
+            If None, no smoothing is done.
+        MyRange: the range of the pdf domain. Used when there are outliers
+            that mess up the histogram bining.
+    
+    Returns:
+        xx_: the domain of PDF
+        rho_: the PDF values on xx_
+        rho_u: upper bound of confidence interval for PDF
+        rho_l: lower bound of confidence interval for PDF
+    """
+    
+    count, bins  = np.histogram(f, bins=nx, density=False, range=MyRange)
     xx_=0.5*(bins[0:-1]+bins[1:])
     bwidth = bins[1]-bins[0]
     N = f.shape[0]
 
     # probability of falling in each bin with 
     # extra two successes and two failures
+
     p=( count+2 ) / ( N  + 4)
 
     rho_= p/bwidth  # expectation of density
@@ -54,36 +83,58 @@ def pdf_1d_wCI(f,nx=100, smoothing_sigma=None,MyRange=None):
     rho_u,rho_l = rho_+ 2*s_,rho_-2*s_
 
     if smoothing_sigma is not None:
-        # smooth the pdf by convolving with a Gaussian kernel
-        rho_= smoothy(rho_,smoothing_sigma)
-        rho_l= smoothy(rho_l,smoothing_sigma)
-        rho_u= smoothy(rho_u,smoothing_sigma)
+        rho_= _smoothy(rho_,smoothing_sigma)
+        rho_l= _smoothy(rho_l,smoothing_sigma)
+        rho_u= _smoothy(rho_u,smoothing_sigma)
         
     return xx_,rho_,rho_u,rho_l
 
-def smoothy(r,sig):
+def _smoothy(r, sig):
+    """Smoothes signal r by convolving with Gaussian of STD sig."""
+
     r=np.concatenate((r[0]*np.ones((1)),r,r[-1]*np.ones((1))))
     r_smoothed = gaussian_filter(r,sigma=sig)
     r_smoothed = r_smoothed[1:-1]
     return r_smoothed
 
 
-def plot_pdf_1d(f,nx=100,smoothing_sigma=None,**kwargs):
+def plot_pdf_1d(f,nx = 100, smoothing_sigma = None, **kwargs):
+    """Computes and plots the 1D PDF of sample data."""
+
     xx,rr=pdf_1d(f,nx=nx,smoothing_sigma=smoothing_sigma)
     plt.plot(xx,rr,**kwargs)
 
-def pdf_2d(f,g,nx=100,ny=100,MyRange=None,smoothing_sigma=None):
+def pdf_2d(f, g, nx=100, ny=100, smoothing_sigma=None, MyRange=None):
+    """Computes joint PDF of 2D data.
+    
+    Args:
+        f: 1d array of sample data.
+        g: 1d array of sample data.
+        nx: number of bins for f.
+        ny: number of bins for g.
+        smoothing_sigma: the STD of a Gaussian kernel convolved with the pdf.
+            If None, no smoothing is done.
+        MyRange: the range of the pdf domain. Used when there are outliers
+            that mess up the histogram bining.
+    
+    Returns:
+        xx_,yy_: the meshgrid domain of PDF
+        rho_: the PDF values on xx_,yy_
+    """
 
     rho_,xedges,yedges=np.histogram2d(f, g, bins=[nx,ny], density=True,range=MyRange)
     xx_,yy_ = 0.5*(xedges[0:-1]+xedges[1:]),0.5*(yedges[0:-1]+yedges[1:])
+
     if smoothing_sigma is not None:
         rho_=gaussian_filter(rho_,sigma=smoothing_sigma)
+
     return xx_,yy_,rho_
 
 
 
-# quick plot of 1d and 2d marginals
+
 def staircase_plot(f,nx=100,ny=100,variable_name=None,figsize=[10,8],xt=[],yt=[]):
+    """Generates a quick plot of 1d and 2d marginals."""
     nrow = np.size(f,1)
     plt.figure(figsize=figsize)
     for j in range(0,nrow):
@@ -108,6 +159,7 @@ def staircase_plot(f,nx=100,ny=100,variable_name=None,figsize=[10,8],xt=[],yt=[]
     plt.subplots_adjust(hspace=.7,wspace=.7)
 
 def staircase_dist(f,nx=100,ny=100,variable_name=None,figsize=[10,8],xt=[],yt=[],Colors='Blues'):
+    """Generates a quick plot of 1d and 2d marginals."""
     nrow = np.size(f,1)
     plt.figure(figsize=figsize)
     CMAP=cm.get_cmap(Colors,lut=100)
@@ -135,6 +187,7 @@ def staircase_dist(f,nx=100,ny=100,variable_name=None,figsize=[10,8],xt=[],yt=[]
 
 
 def Marginals_plot(f,nx=100,ny=100,Titles=None,figsize=[10,8],Colors='Blues',ticks=[],lims=[],tfs=14):
+    """Generates a quick plot of 1d and 2d marginals -- used in the paper."""
     nrow = np.size(f,1)
     myfig=plt.figure(figsize=figsize)
     CMAP=cm.get_cmap(Colors,lut=100)
@@ -163,9 +216,11 @@ def Marginals_plot(f,nx=100,ny=100,Titles=None,figsize=[10,8],Colors='Blues',tic
 
 
 def MarginalAxes(i,j,myfig,Dim=10):
-    # axes assignment for marginal pdf plot
-    # i,j are the row column indices of axes from top left
-    # xleft, ybottom
+    """A general format for marginal PDFs.
+    
+    i,j are the row column indices of axes from top left
+    """
+
     h=.92/Dim - .01
     w=.92/Dim - .01
     dw = .01
@@ -183,9 +238,12 @@ def MarginalAxes(i,j,myfig,Dim=10):
     return my_axes  
 
 def MarginalAxes_10d(i,j,myfig):
-    # axes assignment for marginal pdf plot
-    # i,j are the row column indices of axes from top left
-    # xleft, ybottom
+    """A 10D axes for marginal PDFs.
+    
+    i,j are the row column indices of axes from top left
+    """
+
+    Dim=10
     h=.94/Dim - .01
     w=.94/Dim - .01
     dw = .01
@@ -199,13 +257,22 @@ def MarginalAxes_10d(i,j,myfig):
     my_axes = myfig.add_axes([xl,yl,w,h])
     plt.tick_params(direction='in')
     plt.yticks([])
-    # plt.xticks([])
     return my_axes  
 
 
 def Gaussian_fit(y,r=None):
-    # computing the density of Gaussian fit to y
-    # returned on the grid r
+    """Gives a Gaussian PDF fit to the data.
+    
+    Args:
+        y: 1d array of sample data
+        r: the grid over which the PDF is computed, if None
+            uses 2.5 STD on each side
+
+    Returns:
+        r: the grid
+        p: Gaussian PDF values on r
+    """
+
     sigma = np.sqrt(np.var(y))
     mu = np.mean(y)
 

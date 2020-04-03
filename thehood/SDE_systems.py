@@ -1,9 +1,11 @@
 """
-tools related to analysis and identification of SDE systems used in
-"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics" 
-by H. Arbabi and T. Sapsis
-June 2019, arbabi@mit.edu
+Tools for analysis and identification of SDE systems.
 
+Used in "Data-driven modeling of strongly nonlinear chaotic systems 
+with non-Gaussian statistics" by H. Arbabi and T. Sapsis
+A good reference for theory is "Stochastic Differential equations"
+by K. Sobczyk
+April 2019, arbabiha@gmail.com.
 """
 
 
@@ -28,32 +30,61 @@ from pyswarm import pso
 
 
 
-
-#########################################################################
-# class of stochastic models
 class StochasticSystem(object):
-    def __init__(self,F=None,G=None):
+    """Class of stochastic systems.
 
-        self.F  =  F    # drift
-        self.G  =  G    # diffusion
+    Attributes:
+        F (callable): drift term.
+        G (callable): diffusion term.
+    """
+
+    def __init__(self, F=None, G=None):
+        """Initis the class with drift and diffusion."""
+
+        self.F  =  F    
+        self.G  =  G    
         
     def GenerateTrajectory(self,y0=np.array([0,0.01]),T=3000,N=30000):
-        # we solve the SDE using Euler-Maruyama 
-        t_run = timeit.default_timer()
+        """Computes a sample trajectory of the system.
+
+        Args:
+            y0: initial condition
+            T: length of time interavkl for trajectory
+            N: number of time steps
+
+        Returns:
+            t: array of time stamps
+            Y: values of state at t
+        """
+        
+        # t_run = timeit.default_timer()
         t,Y=EM_numba(self.F,self.G,y0,T,N)
-        print('EM numba took '+str(timeit.default_timer() - t_run)+'secs')
+        # print('EM numba took '+str(timeit.default_timer() - t_run)+'secs')
         return t,Y
 
 class Stochastic_Oscillator(StochasticSystem):
+    """Class of nonlinear stochastic oscillators.
+
+    Attributes:
+        pforce (callable): the potential force as a function of displacement
+        beta (flaot): the (linear) damping coefficient
+        D (float): intensity of white noise forcing
+        tau (float): correlation time of systems displacement
+
+    """
     def __init__(self,pforce,beta,D):
-        # potential force
+        """Constructs the Stochastic_Oscillator class."""
+        
         self.pforce = pforce
+
         # we use another method to set D and beta
         # bc we are going to do it a lot
+
         self._set_beta_D(beta,D)
 
     def _set_beta_D(self,beta,D):
-        print('setting the parameters of stochastic oscillator')
+        """Sets the free parameters of stochastic oscillator."""
+
         self.beta=beta
         self.D = D
         SigmaMat=np.array([0,np.sqrt(2*D)])
@@ -74,8 +105,9 @@ class Stochastic_Oscillator(StochasticSystem):
         self.G = Diffusion
 
     
-    def tau_sys(self,beta,D,**trajectory_info):
-        # computing the correlation time of the system
+    def tau_sys(self, beta, D, **trajectory_info):
+        """Computes the correlation time of system at parameter values beta and D."""
+
         self._set_beta_D(beta,D)
         np.random.seed(42)
         t2,Y2=self.GenerateTrajectory(**trajectory_info)
@@ -87,8 +119,18 @@ class Stochastic_Oscillator(StochasticSystem):
         print('============================')
         return tau
 
-    def Match_Correlation(self,tau_target,beta0,alpha,**trajectory_info):
-        print('matching the correlation time:')
+    def Match_Correlation(self, tau_target, beta0, alpha, **trajectory_info):
+        """Optimizes beta and D to match a target correlation time.
+        
+        Args:
+            tau_target (float): the target value of correlation time.
+            beta0 (float): initial guess for beta.
+            alpha (float): b/D ratio.
+            
+        Returns:
+            sets the optimal values of beta and D, also returns the sequence of tried
+            values for beta and tau.
+        """
         
         tau_mismatch = lambda b : (self.tau_sys(b,b/alpha,**trajectory_info) - tau_target)/tau_target
 
@@ -99,23 +141,39 @@ class Stochastic_Oscillator(StochasticSystem):
         return beta_vals,tau_vals 
 
 class Linear_Stochastic_Oscillator(Stochastic_Oscillator):
+    """Class of linear stochastic oscillators.
+
+    A subclass of Stochastic_Oscillators with the difference
+    that pforce(x):=kx.
+
+    See base class for attributes.
+    """
+
     def __init__(self,k,beta,D):
-        # potential force
+        """Initis the linear stochastic oscillator class."""
         @jit
         def f1(x):
             return k*x
         self.pforce = f1
+        
         # we use another method to set D and beta
         # bc we are going to do it a lot
         self._set_beta_D(beta,D)
 
-########################################################################
-# some routines for system ID 
+
+
 
 def SystemID_spec_match(q,dt=.1):
-    # this program identifies a set of stochastic oscillators 
-    # that produce the closest power spectral density to the signals
-    #  stored in columns of q  with sampling interval dt
+    """Finds a linear stochastic oscillator with closest PSD to data.
+    
+    Args:
+        q (np.ndarray): n*dim array of time series, each column is a random variable
+        dt: the sampling interval
+    
+    Returns:
+        Dictionary of system parameters for dim linear stochastic oscillators
+    """
+
     Dim = q.shape[1]
 
     k_opt,D_opt = np.zeros(Dim),np.zeros(Dim)
@@ -127,16 +185,21 @@ def SystemID_spec_match(q,dt=.1):
         # first we optimize in q-space
         k_opt[j],D_opt[j]=Optimize_Sqq(q[:,j],dt)
 
-    # return optimal parameters
     Sys_Params={'k': k_opt, 'beta':D_opt/k_opt,'D':D_opt}
     
     return Sys_Params
 
 def Optimize_Sqq(qj,dt):
-    # this function finds the optimal values of (k,D) for a linear oscillator
-    # so that the PSD of its response to WGN is closest to PSD of time series q_j 
-    # with sampling interval dt
+    """Finds the best parameters of a linear stochastic oscillator that match the PSD of data.
+
+    Args:
+        qj (np.ndarray): 1d array of time series
+        dt (float): sampling interval
     
+    Returns:
+        k and D parameters of the oscillator
+
+    """
 
     # find the signal psd
     fs=1.0/dt
@@ -163,10 +226,15 @@ def Optimize_Sqq(qj,dt):
     return k,D
 
 def SystemID_tau_match(q,dt=.1):
-    # this program identifies a set of stochastic oscillators 
-    # that produce the closest correlation time to the signals
-    #  stored in columns of q  with sampling interval dt
-    # it also matches the variance of \dot{q}
+    """Finds the best parameters of an oscillator that match the correlation time of data.
+
+    Args:
+        q (np.ndarray): n*dim array of time series, each column is a random variable
+        dt: the sampling interval
+    
+    Returns:
+        Dictionary of parameters of dim oscillators
+    """
     Dim = q.shape[1]
 
     Sys_Params={'k': np.zeros(Dim), 'beta':np.zeros(Dim),'D':np.zeros(Dim)}
@@ -181,18 +249,24 @@ def SystemID_tau_match(q,dt=.1):
     return Sys_Params
 
 def Optimize_tau(x,dt):
-    # inputs: x scalar time series (with standard normal distribution)
-    #         dt sampling interval of x
-    # outputs: MySys a stochastic oscillator object 
-    #           that has standard normal pdf as invariant meausre
-    #           and MySys displacement has same correlation time as x
-    #           and MySys velocity is Guassian and has same variance as xdot
+    """Finds the best parameters of an oscillator that match the correlation time of data.
+
+    Args:
+        x (np.ndarray): 1d array of time series, each column is a random variable
+        dt: the sampling interval
+    
+    Returns:
+        MySys: a Linear_Stochastic_Oscillator instance with optimal parameters
+            MySys has a standard normal pdf as invariant meausre. Also MySys displacement
+            has same correlation time as x and its velocity dist. is Guassian 
+            and has same variance as xdot.
+    """
 
     xdot = central_diff(x,dt)
     var_xdot = np.var(xdot)
     tau_target = CorrelationTime(x,dt=dt)
 
-    # initialize a system
+    
     k = var_xdot
     beta0 = 0.1
     alpha = 1.0/k  # beta/D ratio
@@ -206,15 +280,25 @@ def Optimize_tau(x,dt):
     MySys.Match_Correlation(tau_target,np.array([1e-2,20]),alpha,T=R*tau_target,N=int(R*100))
     MySys.k=k
 
-    # return the oscillator object
     return MySys
 
 
 
 
-def draw_trajectory_SDEsys(Oscillatior_Parametrs,q0=np.array([.1,.1]),T=10000,dt=0.1):
-    # generate a trajectory of the SDE model
-    # given system parameters in q space
+def draw_trajectory_SDEsys(Oscillatior_Parametrs, q0 = np.array([.1,.1]), T = 10000, dt = 0.1):
+    """Generates a trajectory of the SDE model.
+
+    Args:
+        Oscillatior_Parametrs: dictionary of aparemetrs for stochastic oscillators
+        q0: initial condition for each oscillator
+        T: length of trajecvtory
+        dt: time step
+    
+    Returns:
+        t_model: time stamps of trajectory
+        q_model: state values
+    """
+
 
     N=int(T*1000)   # number of time steps
     n_samp = np.amax([int(dt/(T/N)),1])  # sampling interval (cannot be smaller than time step)
@@ -237,11 +321,21 @@ def draw_trajectory_SDEsys(Oscillatior_Parametrs,q0=np.array([.1,.1]),T=10000,dt
 
 
 
-
-########################################################################
-# Euler-Maruyama integration via numba
 @jit
 def EM_numba(F,G,Y0,T=100,N=500000):
+    """Euler-Maruyama method for integarting a trajector of SDE.
+
+    Args:
+        F (callable): the drift term
+        G (callable): the diffusion term
+        Y0 (array or list): initial condition
+        T: length of trajectory
+        N: number of time steps
+
+    Returns:
+        t: array of trajectory time stamps
+        Y: state values on trajectory
+    """
 
     Y0 = np.array(Y0)
     Y = np.zeros((Y0.shape[0],N+1))
@@ -250,22 +344,22 @@ def EM_numba(F,G,Y0,T=100,N=500000):
     t=np.linspace(0,T,N+1)
 
     for jt in range(0,N):
-        Y[:,jt+1]=EM_step(F,G,Y[:,jt],dt)
+        Y[:,jt+1]=_EM_step(F,G,Y[:,jt],dt)
 
     return t,Y
 
 @jit
-def EM_step(F,G,Y,dt):
+def _EM_step(F,G,Y,dt):
+    """Takes one step of Euler-Maruyama method."""
     dW = np.sqrt(dt) * np.random.randn(Y.shape[0])
     Ynext = Y + F(Y) * dt + G(Y) * dW
     return Ynext
 
 
-########################################################################
-# some auxiliary functions
 
 def CorrelationTime(y,dt=1):
-    # compute the correlation time of time series
+    """Computes the correlation time of time series in y."""
+
     ac=np.correlate(y,y,'same')
     Index_m= int( (len(y)-1) / 2)   # index of middle point (lag=0)
     Slab=ac[Index_m:]               # take the right half
@@ -275,7 +369,23 @@ def CorrelationTime(y,dt=1):
     return tau_corr
 
 def bisection(f,a,b,tol=1e-4,Max_trial=14):
-    # solving f(x)=0 with x in [a,b] 
+    """Solves f(p)=0 with p in [a,b] using bisection method.
+    
+    The coding is optimized so that f is computed the minimal number
+    of required times.
+
+    Args:
+        f (callable): the function f in f(p)=0
+        a (float): lower bound of admissible solution
+        b (float): upper bound of admissible solution
+        tol: tolerance of solution, i.e., required |f(x)| for convergence
+        Max_trial: maximum number of trying (evaluating+1) f
+
+    Returns:
+        pvalues: the tried values for p
+        fvalues: corresponding values for f(p)
+    
+    """
     pvalues = np.zeros(Max_trial+3)
     fvalues = np.zeros(Max_trial+3)
     fa,fb = f(a),f(b)
@@ -325,14 +435,24 @@ def bisection(f,a,b,tol=1e-4,Max_trial=14):
 
     return pvalues,fvalues
 
-def Stochastic_RootFinder(F,x0,a=.5,alpha=0.5,max_iter=20,xtol=.01,ValidInterval=[0.00001,100]):
-    # solving f(x)=0
-    # while we have access to a stochastic consistent estimator of f(x)
-    # given by F(x)
-    # x0, first guess and the rest are parameters
-    # following Pasupathy & Kim 2011
+def Stochastic_RootFinder(F, x0, a=.5, alpha=0.5, max_iter=20, xtol=.01, ValidInterval=[0.00001,100]):
+    """Solving f(x)=0 when we can only evaluate f with some noise.
+    
+    We use the suggested algorithm in 
     # "The Stochastic Root Finding Problem: Overview, 
-    # Solutions, and Open Questions"
+    # Solutions, and Open Questions" by Pasupathy & Kim 2011
+    
+    Args:
+        F (callable): an unbiased estimator of f
+        x0 (float): first guess for x
+        ValidInterval: the search interval
+        max_iter: maximum number of allowed iterations
+        To see other params check out the above paper.
+
+    Returns:
+        the final iteration value of x and F(x)
+    """
+
     xp,n= ValidInterval[1]*2,1
     n0 = int(max_iter/20)+1
     xn = x0
@@ -368,5 +488,7 @@ def Stochastic_RootFinder(F,x0,a=.5,alpha=0.5,max_iter=20,xtol=.01,ValidInterval
     return xnext,Fn
 
 def central_diff(v,dx=1):
+    """Simple finite difference for 1st derivative."""
+    
     dv = ( v[2:]-v[0:-2] ) / (2.0*dx)
     return dv
