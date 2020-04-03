@@ -1,6 +1,6 @@
 # Data-driven Stochastic Modeling
 A Python implementation of the framework proposed in  *"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics"*
- by H. Arbabi and T. Sapsis.
+ by H. Arbabi and T. Sapsis (https://arxiv.org/pdf/1908.08941.pdf). 
  
 Given time series data from a measure-preserving chaotic system (a.k.a. stationary stochastic process), this framework generates a system of SDEs with nonlinear observation maps that produce statsitics and power spectra similar to the time series. The framework is based on optimal transport of probabilities, and its summary is shown in the figure below.
 
