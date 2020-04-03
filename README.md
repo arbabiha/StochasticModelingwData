@@ -2,7 +2,7 @@
 A Python implementation of the framework proposed in  *"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics"*
  by H. Arbabi and T. Sapsis.
  
-Given time series data on a measure-preserving chaotic system (a.k.a. stationary stochastic process), this framework generates a system of SDEs with nonlinear observation maps that produce statsitics and power spectra similar to the time series. The framework is based on optimal transport of probabilities, and its summary is shown in the figure below.
+Given time series data from a measure-preserving chaotic system (a.k.a. stationary stochastic process), this framework generates a system of SDEs with nonlinear observation maps that produce statsitics and power spectra similar to the time series. The framework is based on optimal transport of probabilities, and its summary is shown in the figure below.
 
 <img src="https://github.com/arbabiha/StochasticModelingwData/blob/master/thehood/FrameworkSketch.png" width="700">
 
