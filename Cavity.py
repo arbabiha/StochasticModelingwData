@@ -29,34 +29,34 @@ import transport_maps as tm
 import SDE_systems as sm
 
 
-def Cavity_SDEmodeling():
-    """Models a state variable of Lorenz using optimal transport.
-    
-    The code
-    1- loads the SPOD mode and coordiante data,
-    2- computes the transport map to standard normal distiburion,
-    3- identifies linear stochastic oscillators with same spectra
-    4- computes a trajectory from oscillators and pull them back under the transport map.
-    5- computes pointwise stats for cavity
+def Cavity_SDEmodeling(n_samp:int = 10, t_max:float = 2500, poly_order:int = 2, Dim= 10, 
+                       basetag='production', SavePath='./results/'):
+    """Models a cavity SPOD dynamics using optimal transport and spectral matching.
+
+    Args:
+        n_samp: sampling rate of time series, original dt =.01
+        t_max: length of time series, max is 10000
+        poly_order: order of polynomial used in the transport
+        Dim: how many SPOD coordiantes are modeled 
+        basetag: tag describing the putpose, e.g. production, analysis, etc.
+        SavePath: folder path for saving the model from data
+
+
+    Returns:
+        the saved-data tag
     """
 
-    Dim = 10
-    n_samp,t_max=10,2500
-    poly_order=2
-
     # data tag
-    Tag='production_T'+str(t_max)+'/'
+    Tag=basetag+'_T'+str(t_max) + '_Dim='+str(Dim)+'_ns'+str(n_samp) +'_po'+str(poly_order)
     print('data tag= '+Tag)
     print('Dim='+str(Dim)+' n_samp='+str(n_samp)+' t_max='+str(t_max) )
 
     ## save path
-    SavePath='./results/'
     if not os.path.exists(SavePath):
         os.makedirs(SavePath)
 
     # We have already computed the SPOD of cavity
     # here we only load and subsample the data
-
     CavityData=sio.loadmat('./thehood/Cavity_SPOD_small.mat') 
     SPOD_coords,t_coords = CavityData['y'],CavityData['t']
     SPOD_coords = np.real(SPOD_coords[0:Dim,:])
@@ -68,7 +68,7 @@ def Cavity_SDEmodeling():
     y_train = SPOD_coords[:n_max:n_samp,:] # training data
     t_train = t_coords[:n_max:n_samp]
     dt = t_train[1]-t_train[0]
-    print('train data size='+str(y_train.shape))
+    print('training data size='+str(y_train.shape))
 
     # form the map and transform data
     T=tm.compute_transport_map(y_train,polynomial_order=poly_order,MPIsetup=None)
@@ -80,8 +80,8 @@ def Cavity_SDEmodeling():
     # dill.dump(T,file_h)
     # file_h.close()
 
-    
-    Oscillator_Params=sm.SystemID_spec_match(q_train,dt=dt) # model the q dynamics
+    # model the q dynamics
+    Oscillator_Params=sm.SystemID_spec_match(q_train,dt=dt) 
 
 
     # generate trajectory of those SDEs
@@ -97,19 +97,19 @@ def Cavity_SDEmodeling():
 
 
     # save model data for MATLAB
-    sio.savemat(SavePath+'Cavity_modal_'+Tag[:-1],{'y_model':y_model,'y_train':y_train,'t_model':t_model,'t_train':t_train,'q_model':q_model,'q_train':q_train})
+    sio.savemat(SavePath+'Cavity_modal_'+Tag,{'y_model':y_model,'y_train':y_train,'t_model':t_model,'t_train':t_train,'q_model':q_model,'q_train':q_train})
 
 
     # compute the poitwsie stat in truth and model
-    PointwiseStats4cavity(y_train,y_model,SPOD_coords,Tag) 
+    PointwiseStats4cavity(y_train,y_model,SPOD_coords,Tag,SavePath=SavePath) 
 
-    return Tag[:-1]
+    return Tag
 
 
-def PointwiseStats4cavity(x_train,x_model,x_truth,Tag):
+def PointwiseStats4cavity(x_train, x_model, x_truth, Tag, SavePath = './results/'):
     """Computes the pointwise time-series at several points in cavity.
 
-    This code constructs the SPOD model -- using SDE model and truth --
+    Constructs the SPOD model -- using SDE model and truth --
     and computes time-series of pointwise velocity at a few points.
     Loads the sensor location information.
 
@@ -117,6 +117,8 @@ def PointwiseStats4cavity(x_train,x_model,x_truth,Tag):
         x_train (np.ndarray): the training SPOD coordiante time series
         x_model (np.ndarray): the SPOD coordiante time series from the stochastic model
         x_truth (np.ndarray): the truth SPOD coordiante time series
+        Tag: tag used for naming the data file
+        SavePath: where to save the files
 
     Returns:
         saves the ponitwise time series.
@@ -181,7 +183,7 @@ def PointwiseStats4cavity(x_train,x_model,x_truth,Tag):
     print('Flow iteration took {} seconds'.format(timeit.default_timer() - t_sim))
 
     # # save pointwise data
-    sio.savemat('./results/Cavity_pointwise_'+Tag[:-1],{'uv_model':uv_model,'uv_train':uv_train,'uv_truth':uv_truth,'Sensors':Sensors})
+    sio.savemat(SavePath+'Cavity_pointwise_'+Tag,{'uv_model':uv_model,'uv_train':uv_train,'uv_truth':uv_truth,'Sensors':Sensors})
 
 
 def Plot_SPOD_marginal(savepath,tag='',picformat='png'):

@@ -29,7 +29,8 @@ import transport_maps as tm
 import SDE_systems as sm
 
 
-def ExtrapolateTails(idx_target=0):
+def ExtrapolateTails(idx_target = 0, years_train = 2, polynomial_order = 2,
+                     SavePath='./results/'):
     """Extrapolating the tails of climate tim-series.
 
 
@@ -41,23 +42,20 @@ def ExtrapolateTails(idx_target=0):
     npc=27 is the number of covariates for each target variable
     yp is the periodic part of y & yc is the chaotic part of y
     such that y=yp+yc
-    
-    The code finds the mapping from data (various choice of variables)
-    to Standard Normal Distribution (SND), then generates a big sample from SND
-    and pulls it back under the mapping. 
+
 
     Args:
-        idx_target: 0:U-velocity, 1:V-velocity and 2:Temperature
+        idx_target: variable to be modeled; 0 is U-velocity, 1 V-velocity and 2 Temperature
+        years_train: length of training data in years
+        polynomial_order: order of polynomial used for transport map
+        SavePath: where to save the data
 
     
     Returns:
         saves the pulled back data
     
     """
-    years_train = 2 # how many years of training data
     start_year = 0 # when does the training data start
-    polynomial_order = 2      # order of Polynomial Tranport Map
-
 
 
     Tag = 'NorthPole_var'+str(idx_target)+'_r'+str(polynomial_order)+'_tyrs'+str(years_train)+'_syrs'+str(start_year)
@@ -80,7 +78,7 @@ def ExtrapolateTails(idx_target=0):
     yn_train=Y_train[:,idx_target]
     yn_truth=Y[:,idx_target]
 
-    SavePath='./results/'
+    
     if not os.path.exists(SavePath):
         print('create path ...')
         os.makedirs(SavePath)
@@ -110,8 +108,9 @@ def ExtrapolateTails(idx_target=0):
         yns_model[:,dim]=yn_model
 
         # we do the saving in each loop
-        sio.savemat('./results/'+Tag,{'y_truth':yn_truth,'y_train':yn_train,'ys_model':yns_model,'n_completed':dim})
-    
+        sio.savemat(SavePath+Tag,{'y_truth':yn_truth,'y_train':yn_train,'ys_model':yns_model,'n_completed':dim})
+
+    return Tag
     
 def Plot_NorthPole_signals(savepath,tag='',picformat='png'):
     """Plots the time series of U-velocity and temperature wavelet coeffs on Northpole."""

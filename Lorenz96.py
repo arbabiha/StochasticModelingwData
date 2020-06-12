@@ -31,24 +31,27 @@ import transport_maps as tm  # pylint: disable=import-error
 
 
 
-def Lorenz96_SDEmodel():
-    """Models a state variable of Lorenz using optimal transport.
+def Lorenz96_SDEmodel(Dim = 1, n_samp = 1, t_max = 1000, poly_order = 3,
+                      basetag='',SavePath='./results/'):
+    """Gives a generative model of a state variable of Lorenz using optimal transport.
     
-    The code
-    1- loads the data,
-    2- computes the transport map to standard normal distiburion,
-    3- identifies linear stochastic oscillators with same spectra
-    4- computes some data from oscillators and pull them back under the transport map.
+
+    Args:
+        Dim: number of state variables to be modelled 
+        n_samp: sampling interval, original dt=0.1
+        t_max: the length of time series used for training, max possible is 10000
+        poly_order: order of polynomial used in transport
+
+    Returns:
+        saves data from the generative model
+
     """
 
-    Dim=1  
-    n_samp=1    # sampling interval (dt=0.1)
-    t_max=1000   
-    poly_order=3    # degree of polynomial used for transport map
+
     
     
-    Tag='r'+str(poly_order)+'_t'+str(t_max)+'_ns'+str(n_samp)
-    SavePath='./results/'
+    Tag=basetag+'r'+str(poly_order)+'_t'+str(t_max)+'_ns'+str(n_samp)
+
     if not os.path.exists(SavePath):
         print('create path ...')
         os.makedirs(SavePath)
