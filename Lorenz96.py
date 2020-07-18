@@ -176,7 +176,7 @@ def Plot_Lorenz96(savepath,tag='',picformat='png'):
     # truth, random phase model and SDE model
     data=sio.loadmat('./results/Lorenz_RPM')
     x,x_qp,dt=np.squeeze(data['x']),np.squeeze(data['x_qp']),np.squeeze(data['dt'])
-    data2=sio.loadmat('./results/LorenzModel_r3_t1000_ns1.mat')
+    data2=sio.loadmat('./results/LorenzModel_r3_t1000_ns1')
     x_train,x_model,t_model = data2['x_train'],data2['x_model'],data2['t_model']
 
     # we use the training data as truth
