@@ -1,26 +1,28 @@
-# Data-driven Stochastic Modeling
-A Python implementation of the framework proposed in  *"Data-driven modeling of strongly nonlinear chaotic systems with non-Gaussian statistics"*
+# Generative Stochastic Modeling for Chaotic Dynamical Systems
+A Python implementation of the framework proposed in  *"Generative stochastic modeling of strongly
+nonlinear flows with non-Gaussian statistics"*
  by H. Arbabi and T. Sapsis (https://arxiv.org/pdf/1908.08941.pdf). 
  
-Given time series data from a measure-preserving chaotic system (a.k.a. stationary stochastic process), this framework generates a system of SDEs with nonlinear observation maps that produce statsitics and power spectra similar to the time series. The framework is based on optimal transport of probabilities, and its summary is shown in the figure below.
+Given time-series data from a measure-preserving chaotic system (a.k.a. stationary stochastic process), this framework generates a system of SDEs with nonlinear observation maps that produce statsitics and power spectra similar to the time series. The framework is based on optimal transport of probabilities, and its summary is shown below.
 
 <img src="https://github.com/arbabiha/StochasticModelingwData/blob/master/thehood/FrameworkSketch.png" width="700">
 
-## files in the root folder:
+## What is in here?
 
-#### Data: 
-Before running the code, go to https://www.dropbox.com/sh/yri4i4r90glh8q2/AADbfXQ0FFGstQbXAM1sdvw6a?dl=0 download the .mat files and place them in "thehood" folder.
+**Download the time-series data:** 
+Before running the code, go to https://www.dropbox.com/sh/4rr5c8ee0a3szs4/AAClNuOgrDkr-3Ho7GNE8NDUa?dl=0 download the .mat files and place them in "thehood" folder.
 
-#### Lorenz 96: 
-Finds a 1D SDE and a 1D nonlinear observation map that reproduces the statistics of a chaotic Lorenz 96 state variable. Runtime is ~5min.
+**Lorenz96.py** finds a 1D SDE and a 1D nonlinear observation map that reproduces the statistics of a chaotic Lorenz 96 state variable. Runtime is ~5min.
 
-#### Cavity: 
-Finds a 10D SDE and 10D nonlinear map that give the same statistics and PSD as SPOD modal coordinates of cavity flow. Runtime is ~1hr.
+**Cavity.py** finds a 10D SDE and 10D nonlinear map that give the same statistics and PSD as SPOD modal coordinates of cavity flow. Runtime is ~1hr.
 
-#### Climate: 
-It uses the optimal transport model to extrapolate the tails of the distribution (i.e. characterizes the probabilities of extreme events). Runtime is about ~30min.
+**Climate_tails.py** uses the optimal transport model to extrapolate the tails of the distribution (i.e. characterizes the probabilities of extreme events). Runtime is about ~30min.
 
-These codes show the use of modules in './thehood/' and reproduce the plots in the paper. The computational bottleneck in all three is computing the inverse of transport maps for samples generated from SDE models. The reported simulation times are based on using 20 parallel threads.
+
+**Convergence_analysis.py** repeats the modeling for various sample sizes and polynomial orders. For lorenz system it takes 30 min, but for cavity it takes mych longer.
+
+
+These codes show the use of modules in './thehood/' and reproduce the plots in the paper. The computational bottleneck in modeling is usually computing the inverse of transport maps for samples generated from SDE models. The reported simulation times are based on using 20 parallel threads.
 
 ## Dependencies:
 
